@@ -3,18 +3,31 @@
 <head>
   <title>YouTube Deep Pause Settings</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 400px; }
-    input { width: 100%; padding: 8px; margin: 10px 0; box-sizing: border-box; }
-    button { padding: 8px 16px; background: #0f0f0f; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    button:hover { background: #333; }
-    #status { margin-top: 10px; color: green; font-size: 14px; }
+    body { font-family: sans-serif; padding: 20px; max-width: 400px; background: #0f0f0f; color: #e1e1e1; }
+    h2 { color: #fff; }
+    input[type="password"] { width: 100%; padding: 8px; margin: 10px 0; box-sizing: border-box; background: #222; border: 1px solid #444; color: #fff; }
+    button { padding: 8px 16px; background: #3ea6ff; color: #0f0f0f; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+    button:hover { background: #65b8ff; }
+    #status { margin-top: 10px; color: #4caf50; font-size: 14px; }
+    .source-group { margin-top: 20px; background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+    .source-group label { display: block; margin-bottom: 8px; cursor: pointer; }
+    a { color: #3ea6ff; }
   </style>
 </head>
 <body>
   <h2>Settings</h2>
   <label for="apiKey">Gemini API Key:</label>
   <input type="password" id="apiKey" placeholder="Enter your Gemini API Key">
-  <button id="save">Save</button>
+  
+  <div class="source-group">
+    <h3 style="margin-top: 0; font-size: 14px; color: #aaa;">Preferred Search Sources</h3>
+    <label><input type="checkbox" id="src-wiki"> Wikipedia</label>
+    <label><input type="checkbox" id="src-reddit"> Reddit</label>
+    <label><input type="checkbox" id="src-scholar"> Google Scholar</label>
+    <label><input type="checkbox" id="src-youtube"> YouTube (Related Videos)</label>
+  </div>
+
+  <button id="save">Save Preferences</button>
   <div id="status"></div>
   
   <p style="font-size: 12px; color: #666; margin-top: 20px;">
