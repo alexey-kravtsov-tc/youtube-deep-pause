@@ -1,4 +1,10 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "openOptions") {
+    chrome.runtime.openOptionsPage();
+    sendResponse({ status: "ok" });
+    return true;
+  }
+
   if (request.action === "getDeepPauseContext") {
     console.log("%c[Deep Pause Background] New Request Received", "color: #00bcd4; font-weight: bold;", request);
 
@@ -11,7 +17,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const sources = items.searchSources || { wiki: true, reddit: true, scholar: false, youtube: false };
         let activeSources = [];
         if (sources.wiki) activeSources.push("Wikipedia");
-        if (sources.reddit) activeSources.push("Reddit");
+        if (sources.reddit) activeSources.push("Reddit (CRITICAL: Link ONLY to root subreddits e.g., https://www.reddit.com/r/technology, NEVER individual posts to avoid deleted content)");
         if (sources.scholar) activeSources.push("Google Scholar");
         if (sources.youtube) activeSources.push("YouTube");
         
@@ -68,7 +74,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           promptText += `Spoken dialogue: <dialogue> ${fullTranscript} </dialogue> `;
         }
         
-        promptText += `Task: 1. Identify the concept discussed at exactly ${request.timestamp}s. 2. Output 5-10 direct educational links. ${sourceInstruction} 3. For each link, provide a 'preview' field containing a concise, 40-word factual summary of what the user will read when they click the link. This preloads data for a hover panel. 4. Provide a short reason for relevance. 5. DO NOT generate a general summary.`;
+        // Increased summary length to 80 words for a much richer preview
+        promptText += `Task: 1. Identify the concept discussed at exactly ${request.timestamp}s. 2. Output 5-10 direct educational links. ${sourceInstruction} 3. For each link, provide a 'preview' field containing a comprehensive, 80-word factual summary of what the user will read when they click the link. 4. Provide a short reason for relevance. 5. DO NOT generate a general summary.`;
         promptText = promptText.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;

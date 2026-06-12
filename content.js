@@ -2,7 +2,7 @@ let deepPauseTimeout = null;
 let linkBuffer = [];
 let currentVideoUrl = "";
 let isMinimized = false;
-window.vcPreviews = {}; // Global store for previews
+window.vcPreviews = {}; 
 
 const getBaseUrl = (url) => url.split('&t=')[0];
 
@@ -13,13 +13,12 @@ function renderOverlay(currentSentence = null) {
   let html = '';
   
   if (currentSentence && currentSentence.trim() !== "") {
-    html += `<div style="font-size: 14px; margin-bottom: 10px; color: #ffcc00; font-style: italic;">"${currentSentence}"</div>`;
+    html += `<div style="font-size: 14px; margin-bottom: 16px; color: #ffcc00; font-style: italic;">"${currentSentence}"</div>`;
   }
   
   if (linkBuffer.length > 0) {
     const groups = { Wikipedia: [], Reddit: [], "Google Scholar": [], YouTube: [], Other: [] };
     
-    // Categorize links based on URL
     linkBuffer.forEach(link => {
       if (link.url.includes('wikipedia.org')) groups.Wikipedia.push(link);
       else if (link.url.includes('reddit.com')) groups.Reddit.push(link);
@@ -31,23 +30,26 @@ function renderOverlay(currentSentence = null) {
     for (const [sourceName, links] of Object.entries(groups)) {
       if (links.length === 0) continue;
       
+      // Wrap each group in a visual card with a distinct background
+      html += `<div class="vc-source-card">`;
       html += `<div class="vc-source-group-title">${sourceName}</div>`;
-      html += '<ul style="margin: 0; padding-left: 20px; margin-bottom: 16px;">';
+      html += '<ul style="margin: 0; padding-left: 20px; list-style-type: none; padding-left: 0;">';
       
       links.forEach((link, idx) => {
         const linkId = `vc-link-${sourceName.replace(/\s+/g, '')}-${idx}-${Date.now()}`;
         
-        // Truncate preview text to ~400 chars to fit perfectly in the side panel
+        // Double character limit: ~800 chars
         let previewText = link.preview || "No preview information generated for this link.";
-        if (previewText.length > 400) previewText = previewText.substring(0, 397) + "...";
+        if (previewText.length > 800) previewText = previewText.substring(0, 797) + "...";
         window.vcPreviews[linkId] = previewText;
 
-        html += `<li style="margin-bottom: 12px;">
-          <a href="${link.url}" target="_blank" class="vc-link-item" data-id="${linkId}" style="color: #3ea6ff; text-decoration: none; font-weight: bold; font-size: 28px;">${link.title}</a>
+        html += `<li style="margin-bottom: 12px; padding-left: 10px; border-left: 2px solid #444;">
+          <a href="${link.url}" target="_blank" class="vc-link-item" data-id="${linkId}" style="color: #3ea6ff; text-decoration: none; font-weight: bold; font-size: 24px;">${link.title}</a>
           <span style="display: block; font-size: 14px; color: #aaa; margin-top: 4px;">${link.reason}</span>
         </li>`;
       });
       html += '</ul>';
+      html += `</div>`;
     }
   } else {
     html += '<div style="font-size: 14px; color: #aaa;">No context links buffered yet.</div>';
@@ -56,7 +58,6 @@ function renderOverlay(currentSentence = null) {
   body.innerHTML = html;
 }
 
-// Handle Hover Events for Preview Panel
 document.addEventListener('mouseover', (e) => {
   if (e.target.classList.contains('vc-link-item')) {
     const previewPanel = document.getElementById('vc-preview-panel');
@@ -105,6 +106,7 @@ document.addEventListener('pause', (event) => {
         <div class="vc-header">
           <span class="vc-title">Context Links</span>
           <div class="vc-controls">
+            <button id="vc-settings-btn" title="Settings">⚙</button>
             <button id="vc-min-btn" title="Minimize">_</button>
             <button id="vc-close-btn" title="Close">X</button>
           </div>
@@ -114,6 +116,10 @@ document.addEventListener('pause', (event) => {
         <div id="vc-preview-panel"></div>
       `;
       document.body.appendChild(overlay);
+
+      document.getElementById('vc-settings-btn').addEventListener('click', () => {
+        chrome.runtime.sendMessage({ action: "openOptions" });
+      });
 
       document.getElementById('vc-min-btn').addEventListener('click', () => {
         isMinimized = !isMinimized;
