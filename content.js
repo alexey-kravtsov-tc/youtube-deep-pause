@@ -1,5 +1,6 @@
 let deepPauseTimeout = null;
 let linkBuffer = [];
+let commentBuffer = [];
 let currentVideoUrl = "";
 let isMinimized = false;
 window.vcPreviews = {}; 
@@ -15,7 +16,23 @@ function renderOverlay(currentSentence = null) {
   if (currentSentence && currentSentence.trim() !== "") {
     html += `<div style="font-size: 14px; margin-bottom: 16px; color: #ffcc00; font-style: italic;">"${currentSentence}"</div>`;
   }
+
+  // Render Community Insights (Comments)
+  if (commentBuffer.length > 0) {
+    html += `<div class="vc-source-card" style="border-color: #6a1b9a;">`;
+    html += `<div class="vc-source-group-title" style="color: #ce93d8;">💬 Community Insights</div>`;
+    html += '<ul style="margin: 0; padding-left: 0; list-style-type: none;">';
+    
+    commentBuffer.forEach((comment) => {
+      html += `<li style="margin-bottom: 12px; padding-left: 10px; border-left: 2px solid #ab47bc;">
+        <a href="#" class="vc-comment-focus" data-author="${comment.author}" style="color: #e1bee7; text-decoration: none; font-weight: bold; font-size: 18px;">@${comment.author}</a>
+        <span style="display: block; font-size: 14px; color: #aaa; margin-top: 4px;">${comment.reason}</span>
+      </li>`;
+    });
+    html += '</ul></div>';
+  }
   
+  // Render Context Links
   if (linkBuffer.length > 0) {
     const groups = { Wikipedia: [], Reddit: [], "Google Scholar": [], YouTube: [], Other: [] };
     
@@ -30,15 +47,13 @@ function renderOverlay(currentSentence = null) {
     for (const [sourceName, links] of Object.entries(groups)) {
       if (links.length === 0) continue;
       
-      // Wrap each group in a visual card with a distinct background
       html += `<div class="vc-source-card">`;
       html += `<div class="vc-source-group-title">${sourceName}</div>`;
-      html += '<ul style="margin: 0; padding-left: 20px; list-style-type: none; padding-left: 0;">';
+      html += '<ul style="margin: 0; list-style-type: none; padding-left: 0;">';
       
       links.forEach((link, idx) => {
         const linkId = `vc-link-${sourceName.replace(/\s+/g, '')}-${idx}-${Date.now()}`;
         
-        // Double character limit: ~800 chars
         let previewText = link.preview || "No preview information generated for this link.";
         if (previewText.length > 800) previewText = previewText.substring(0, 797) + "...";
         window.vcPreviews[linkId] = previewText;
@@ -48,15 +63,32 @@ function renderOverlay(currentSentence = null) {
           <span style="display: block; font-size: 14px; color: #aaa; margin-top: 4px;">${link.reason}</span>
         </li>`;
       });
-      html += '</ul>';
-      html += `</div>`;
+      html += '</ul></div>';
     }
-  } else {
+  } 
+  
+  if (linkBuffer.length === 0 && commentBuffer.length === 0) {
     html += '<div style="font-size: 14px; color: #aaa;">No context links buffered yet.</div>';
   }
   
   body.innerHTML = html;
 }
+
+// Deep Link Focus Event
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('vc-comment-focus')) {
+    e.preventDefault();
+    const commentSection = document.querySelector('ytd-comments');
+    if (commentSection) {
+      commentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Temporary highlight effect to indicate successful scroll action
+      e.target.style.color = '#fff';
+      setTimeout(() => e.target.style.color = '#e1bee7', 1000);
+    } else {
+      alert("Please scroll down manually to load the comments section first.");
+    }
+  }
+});
 
 document.addEventListener('mouseover', (e) => {
   if (e.target.classList.contains('vc-link-item')) {
@@ -93,6 +125,7 @@ document.addEventListener('pause', (event) => {
     if (baseUrl !== currentVideoUrl) {
       currentVideoUrl = baseUrl;
       linkBuffer = [];
+      commentBuffer = [];
       window.vcPreviews = {};
     }
 
@@ -170,14 +203,20 @@ document.addEventListener('pause', (event) => {
             return;
           }
 
-          const { links } = response.data;
+          const { links, comments } = response.data;
           
           if (links && links.length > 0) {
             links.reverse().forEach(newLink => {
               const normUrl = newLink.url.replace(/\/$/, '').toLowerCase();
               const isDuplicate = linkBuffer.some(existing => existing.url.replace(/\/$/, '').toLowerCase() === normUrl);
-              
               if (!isDuplicate) linkBuffer.unshift(newLink);
+            });
+          }
+
+          if (comments && comments.length > 0) {
+            comments.reverse().forEach(newComment => {
+              const isDuplicate = commentBuffer.some(existing => existing.id === newComment.id);
+              if (!isDuplicate) commentBuffer.unshift(newComment);
             });
           }
           
