@@ -17,11 +17,10 @@ function renderOverlay(currentSentence = null) {
   }
   
   if (linkBuffer.length > 0) {
-    const groups = { Community: [], Wikipedia: [], Reddit: [], "Google Scholar": [], YouTube: [], Other: [] };
+    const groups = { "Comments Insights": [], Wikipedia: [], Reddit: [], "Google Scholar": [], YouTube: [], Other: [] };
     
-    // Categorize into groups
     linkBuffer.forEach(link => {
-      if (link.url === '#comments') groups.Community.push(link);
+      if (link.url === '#comments') groups["Comments Insights"].push(link);
       else if (link.url.includes('wikipedia.org')) groups.Wikipedia.push(link);
       else if (link.url.includes('reddit.com')) groups.Reddit.push(link);
       else if (link.url.includes('scholar.google')) groups["Google Scholar"].push(link);
@@ -32,9 +31,9 @@ function renderOverlay(currentSentence = null) {
     for (const [sourceName, links] of Object.entries(groups)) {
       if (links.length === 0) continue;
       
-      const isCommunity = sourceName === 'Community';
-      const borderColor = isCommunity ? '#6a1b9a' : '#444';
-      const titleColor = isCommunity ? '#ce93d8' : '#ffcc00';
+      const isComments = sourceName === 'Comments Insights';
+      const borderColor = isComments ? '#6a1b9a' : '#444';
+      const titleColor = isComments ? '#ce93d8' : '#ffcc00';
 
       html += `<div class="vc-source-card" style="border-color: ${borderColor};">`;
       html += `<div class="vc-source-group-title" style="color: ${titleColor};">${sourceName}</div>`;
@@ -44,12 +43,11 @@ function renderOverlay(currentSentence = null) {
         const linkId = `vc-link-${sourceName.replace(/\s+/g, '')}-${idx}-${Date.now()}`;
         
         let previewText = link.preview || "No preview information generated for this link.";
-        if (previewText.length > 800) previewText = previewText.substring(0, 797) + "...";
         window.vcPreviews[linkId] = previewText;
 
-        const liBorderColor = isCommunity ? '#ab47bc' : '#444';
-        const linkColor = isCommunity ? '#e1bee7' : '#3ea6ff';
-        const targetAttr = isCommunity ? '' : 'target="_blank"';
+        const liBorderColor = isComments ? '#ab47bc' : '#444';
+        const linkColor = isComments ? '#e1bee7' : '#3ea6ff';
+        const targetAttr = isComments ? '' : 'target="_blank"';
 
         html += `<li style="margin-bottom: 12px; padding-left: 10px; border-left: 2px solid ${liBorderColor};">
           <a href="${link.url}" ${targetAttr} class="vc-link-item" data-id="${linkId}" style="color: ${linkColor}; text-decoration: none; font-weight: bold; font-size: 24px;">${link.title}</a>
@@ -177,8 +175,11 @@ document.addEventListener('pause', (event) => {
     deepPauseTimeout = setTimeout(() => {
       loadingIndicator.innerText = "Extracting context via AI...";
       
+      // Pass URLs of already suggested links to the background script
+      const previousLinksPayload = linkBuffer.map(link => link.url);
+
       chrome.runtime.sendMessage(
-        { action: "getDeepPauseContext", timestamp, videoUrl: rawUrl },
+        { action: "getDeepPauseContext", timestamp, videoUrl: rawUrl, previousLinks: previousLinksPayload },
         (response) => {
           loadingIndicator.style.display = 'none';
           loadingIndicator.innerText = "";

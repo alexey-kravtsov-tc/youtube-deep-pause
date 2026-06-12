@@ -7,15 +7,17 @@
     h2 { color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; }
     .input-group { margin-bottom: 15px; }
     label { display: block; margin-bottom: 5px; font-weight: bold; color: #ccc; }
-    input[type="password"] { width: 100%; padding: 10px; box-sizing: border-box; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px; }
+    input[type="password"], input[type="number"] { width: 100%; padding: 10px; box-sizing: border-box; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px; }
+    input[type="number"] { width: 80px; }
     button { padding: 10px 16px; background: #3ea6ff; color: #0f0f0f; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%; }
     button:hover { background: #65b8ff; }
     #status { margin-top: 15px; color: #4caf50; font-size: 14px; text-align: center; height: 20px; }
-    .source-group { margin-top: 25px; background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333; }
-    .source-group label { display: block; margin-bottom: 10px; cursor: pointer; font-weight: normal; }
+    .source-group, .settings-group { margin-top: 25px; background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+    .source-group label, .settings-group label { display: block; margin-bottom: 10px; cursor: pointer; font-weight: normal; }
     a { color: #3ea6ff; text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .help-text { font-size: 12px; color: #888; margin-top: 4px; display: block; }
+    .help-text { font-size: 12px; color: #888; margin-top: 4px; display: block; line-height: 1.4; }
+    .flex-row { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
   </style>
 </head>
 <body>
@@ -31,8 +33,30 @@
     <label for="ytApiKey">YouTube Data API (v3) Key</label>
     <input type="password" id="ytApiKey" placeholder="Enter your YouTube Data API Key">
     <span class="help-text">Get your key from the <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank">Google Cloud Console</a>.</span>
+    
+    <div class="flex-row">
+      <input type="number" id="maxComments" value="100" min="0" max="100">
+      <span style="font-size: 13px;">Max Comments to Fetch</span>
+    </div>
   </div>
   
+  <div class="settings-group">
+    <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 15px; color: #eee;">AI & Context Behavior</h3>
+    
+    <div class="flex-row" style="margin-top: 0; margin-bottom: 15px;">
+      <input type="number" id="previewLength" value="80" min="10" max="300">
+      <span style="font-size: 13px;">Preview Length (Words)</span>
+    </div>
+
+    <label style="display: flex; align-items: flex-start; gap: 8px;">
+      <input type="checkbox" id="continuousContext" style="margin-top: 3px;">
+      <span>
+        Progressive Context Learning<br>
+        <span class="help-text">Passes previously generated links back to the AI so it provides new insights instead of repeating itself.</span>
+      </span>
+    </label>
+  </div>
+
   <div class="source-group">
     <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 15px; color: #eee;">Preferred Search Sources</h3>
     <label><input type="checkbox" id="src-wiki"> Wikipedia</label>

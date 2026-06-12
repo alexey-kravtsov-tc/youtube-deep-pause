@@ -4,13 +4,12 @@ YouTube Deep Pause is a Chrome extension designed to enhance learning and resear
 
 ## Key Features
 
-* **Community Insights Synthesis:** Analyzes up to 100 top YouTube comments and synthesizes relevant discussions into a unified "Community Insights" link. Hover to read the 800-character AI summary, or click it to seamlessly scroll straight to the video's comment section.
-* **Visual Domain Grouping (Card Layout):** Organizes retrieved links into distinct, visually separated cards (Wikipedia, Reddit, Google Scholar, YouTube, Community) with dedicated background layers for easier scanning.
+* **Progressive Context Learning:** Maintains an active session memory of previously suggested links. When you pause again later in the video, the AI receives its past recommendations to ensure it provides new, complementary insights rather than repeating the same URLs.
+* **Customizable Preview Length:** Define exactly how detailed you want the AI to be. Adjust the word count for the hover previews via the extension settings.
+* **Comments Insights Synthesis:** Analyzes up to 100 top YouTube comments and synthesizes relevant discussions into a unified "Comments Insights" deep link. Hover to read the AI summary, or click to scroll straight to the video's comment section.
+* **Visual Domain Grouping (Card Layout):** Organizes retrieved links into distinct, visually separated cards (Wikipedia, Reddit, Google Scholar, YouTube, Comments Insights) with dedicated background layers for easier scanning.
 * **Reliable Reddit Sourcing:** By utilizing Reddit's search parameter format (`/search/?q=...`), the AI reliably bypasses 404 URL hallucinations caused by unpredictable, deleted, or random thread IDs.
-* **Expanded Previews:** Features a dynamic side-panel that displays a pre-loaded, extended AI-summarized snapshot (up to ~800 characters) of the link's content instantly upon hover.
-* **Quick Settings Access:** A convenient gear icon (⚙) directly in the widget header instantly routes users to the extension configuration page.
-* **Contextual Intelligence:** Extracts spoken dialogue from YouTube's internal caption tracks to provide context-aware analysis using Gemini 3.1 Flash Lite.
-* **Debounced API Requests:** Includes a 2-second throttle mechanism to ensure smooth browsing.
+* **Implicit Timestamp Intelligence:** The AI evaluates context based on exactly where you paused without overtly injecting robotic phrases like "At the 45-second mark".
 
 ## Setup
 
