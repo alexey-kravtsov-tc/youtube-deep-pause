@@ -4,13 +4,13 @@ YouTube Deep Pause is a Chrome extension designed to enhance learning and resear
 
 ## Key Features
 
-* **Contextual Intelligence:** Automatically extracts spoken dialogue from YouTube's internal caption tracks to provide context-aware analysis using Gemini 3.1 Flash Lite.
-* **Search Source Filtering:** Customize where the AI sources links. Opt-in support for Wikipedia (enforces exact existing articles to prevent broken search URLs), Reddit, Google Scholar, and YouTube.
-* **Watch Page Isolation:** Prevents the widget from rendering on the YouTube homepage or catalog pages, executing strictly on `/watch` routes.
-* **Intelligent Buffering:** Maintains a deduplicated buffer of contextual links and information, allowing users to build a research trail without losing previous insights.
-* **Debounced API Requests:** Includes a 2-second throttle mechanism to ensure smooth browsing and API efficiency while scrubbing through content.
-* **Clean UI:** A minimized, scrollable overlay widget that dynamically scales to a maximum of 50% of the active video player's height. Large typographical hierarchies optimize readability.
-* **Privacy & Customization:** Direct integration via user-provided API keys (stored locally).
+* **Visual Domain Grouping:** Organizes retrieved links into distinct, visually separated categories (Wikipedia, Reddit, Google Scholar, YouTube, etc.) for easier scanning.
+* **Instant Previews:** Features a dynamic side-panel that displays a pre-loaded, AI-summarized snapshot of the link's content instantly upon hover, preventing the need to open unnecessary tabs.
+* **Contextual Intelligence:** Extracts spoken dialogue from YouTube's internal caption tracks to provide context-aware analysis using Gemini 3.1 Flash Lite.
+* **Search Source Filtering:** Customize where the AI sources links. Opt-in support for Wikipedia, Reddit, Google Scholar, and YouTube.
+* **Intelligent Buffering:** Maintains a deduplicated buffer of contextual links throughout the video session.
+* **Debounced API Requests:** Includes a 2-second throttle mechanism to ensure smooth browsing.
+* **Clean UI:** A minimized, scrollable overlay widget that dynamically scales to a maximum of 50% of the active video player's height.
 
 ## Architecture
 
