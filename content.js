@@ -2,6 +2,7 @@ let deepPauseTimeout = null;
 let linkBuffer = [];
 let currentVideoUrl = "";
 let isMinimized = false;
+window.vcPreviews = {}; // Global store for previews
 
 const getBaseUrl = (url) => url.split('&t=')[0];
 
@@ -16,14 +17,38 @@ function renderOverlay(currentSentence = null) {
   }
   
   if (linkBuffer.length > 0) {
-    html += '<ul style="margin: 0; padding-left: 20px;">';
+    const groups = { Wikipedia: [], Reddit: [], "Google Scholar": [], YouTube: [], Other: [] };
+    
+    // Categorize links based on URL
     linkBuffer.forEach(link => {
-      html += `<li style="margin-bottom: 16px;">
-        <a href="${link.url}" target="_blank" style="color: #3ea6ff; text-decoration: none; font-weight: bold; font-size: 28px;">${link.title}</a>
-        <span style="display: block; font-size: 14px; color: #aaa; margin-top: 4px;">${link.reason}</span>
-      </li>`;
+      if (link.url.includes('wikipedia.org')) groups.Wikipedia.push(link);
+      else if (link.url.includes('reddit.com')) groups.Reddit.push(link);
+      else if (link.url.includes('scholar.google')) groups["Google Scholar"].push(link);
+      else if (link.url.includes('youtube.com') || link.url.includes('youtu.be')) groups.YouTube.push(link);
+      else groups.Other.push(link);
     });
-    html += '</ul>';
+
+    for (const [sourceName, links] of Object.entries(groups)) {
+      if (links.length === 0) continue;
+      
+      html += `<div class="vc-source-group-title">${sourceName}</div>`;
+      html += '<ul style="margin: 0; padding-left: 20px; margin-bottom: 16px;">';
+      
+      links.forEach((link, idx) => {
+        const linkId = `vc-link-${sourceName.replace(/\s+/g, '')}-${idx}-${Date.now()}`;
+        
+        // Truncate preview text to ~400 chars to fit perfectly in the side panel
+        let previewText = link.preview || "No preview information generated for this link.";
+        if (previewText.length > 400) previewText = previewText.substring(0, 397) + "...";
+        window.vcPreviews[linkId] = previewText;
+
+        html += `<li style="margin-bottom: 12px;">
+          <a href="${link.url}" target="_blank" class="vc-link-item" data-id="${linkId}" style="color: #3ea6ff; text-decoration: none; font-weight: bold; font-size: 28px;">${link.title}</a>
+          <span style="display: block; font-size: 14px; color: #aaa; margin-top: 4px;">${link.reason}</span>
+        </li>`;
+      });
+      html += '</ul>';
+    }
   } else {
     html += '<div style="font-size: 14px; color: #aaa;">No context links buffered yet.</div>';
   }
@@ -31,8 +56,31 @@ function renderOverlay(currentSentence = null) {
   body.innerHTML = html;
 }
 
+// Handle Hover Events for Preview Panel
+document.addEventListener('mouseover', (e) => {
+  if (e.target.classList.contains('vc-link-item')) {
+    const previewPanel = document.getElementById('vc-preview-panel');
+    const title = e.target.innerText;
+    const text = window.vcPreviews[e.target.dataset.id];
+    
+    if (previewPanel && text) {
+      previewPanel.innerHTML = `
+        <h3 style="margin-top:0; color:#fff; font-size:18px; border-bottom:1px solid #444; padding-bottom:8px;">${title}</h3>
+        <p style="font-size:14px; line-height:1.6; color:#e1e1e1; margin:0;">${text}</p>
+      `;
+      previewPanel.style.display = 'block';
+    }
+  }
+});
+
+document.addEventListener('mouseout', (e) => {
+  if (e.target.classList.contains('vc-link-item')) {
+    const previewPanel = document.getElementById('vc-preview-panel');
+    if (previewPanel) previewPanel.style.display = 'none';
+  }
+});
+
 document.addEventListener('pause', (event) => {
-  // Ensure the pause event is firing strictly on the video watch page
   if (window.location.pathname !== '/watch') return;
 
   if (event.target.tagName && event.target.tagName.toLowerCase() === 'video') {
@@ -44,6 +92,7 @@ document.addEventListener('pause', (event) => {
     if (baseUrl !== currentVideoUrl) {
       currentVideoUrl = baseUrl;
       linkBuffer = [];
+      window.vcPreviews = {};
     }
 
     let overlay = document.getElementById('vibe-code-overlay');
@@ -62,6 +111,7 @@ document.addEventListener('pause', (event) => {
         </div>
         <div id="vc-loading" class="vc-loading"></div>
         <div id="vc-body" class="vc-body"></div>
+        <div id="vc-preview-panel"></div>
       `;
       document.body.appendChild(overlay);
 
@@ -69,9 +119,7 @@ document.addEventListener('pause', (event) => {
         isMinimized = !isMinimized;
         document.getElementById('vc-body').style.display = isMinimized ? 'none' : 'block';
         const loading = document.getElementById('vc-loading');
-        if (loading.innerText) {
-          loading.style.display = isMinimized ? 'none' : 'block';
-        }
+        if (loading.innerText) loading.style.display = isMinimized ? 'none' : 'block';
       });
 
       document.getElementById('vc-close-btn').addEventListener('click', () => {
@@ -80,7 +128,10 @@ document.addEventListener('pause', (event) => {
     }
     
     const videoHeight = videoElement.clientHeight || window.innerHeight;
-    overlay.style.maxHeight = (videoHeight / 2) + 'px';
+    const targetHeight = videoHeight / 2;
+    
+    overlay.style.maxHeight = targetHeight + 'px';
+    document.getElementById('vc-preview-panel').style.height = targetHeight + 'px';
     
     overlay.style.display = 'flex';
     isMinimized = false;
@@ -118,16 +169,9 @@ document.addEventListener('pause', (event) => {
           if (links && links.length > 0) {
             links.reverse().forEach(newLink => {
               const normUrl = newLink.url.replace(/\/$/, '').toLowerCase();
-              const normTitle = newLink.title.toLowerCase();
+              const isDuplicate = linkBuffer.some(existing => existing.url.replace(/\/$/, '').toLowerCase() === normUrl);
               
-              const isDuplicate = linkBuffer.some(existing => 
-                existing.url.replace(/\/$/, '').toLowerCase() === normUrl || 
-                existing.title.toLowerCase() === normTitle
-              );
-              
-              if (!isDuplicate) {
-                linkBuffer.unshift(newLink);
-              }
+              if (!isDuplicate) linkBuffer.unshift(newLink);
             });
           }
           

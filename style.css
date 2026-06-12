@@ -1,7 +1,7 @@
 #vibe-code-overlay {
   position: fixed;
   top: 10%;
-  right: 2%;
+  right: 390px; /* Moved left to accommodate the preview panel on the right */
   background: rgba(20, 20, 20, 0.95);
   color: #fff;
   border-radius: 8px;
@@ -26,56 +26,49 @@
   border-top-right-radius: 8px;
 }
 
-.vc-title {
-  font-weight: bold;
-  font-size: 16px; 
-  color: #e1e1e1;
-}
+.vc-title { font-weight: bold; font-size: 16px; color: #e1e1e1; }
 
 .vc-controls button {
-  background: none;
-  border: none;
-  color: #888;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  margin-left: 12px;
-  padding: 0;
-  line-height: 1;
+  background: none; border: none; color: #888; cursor: pointer;
+  font-size: 14px; font-weight: bold; margin-left: 12px; padding: 0; line-height: 1;
 }
 
-.vc-controls button:hover {
-  color: #fff;
-}
+.vc-controls button:hover { color: #fff; }
 
-.vc-loading {
-  font-size: 12px;
-  padding: 10px 14px 0 14px;
-  font-style: italic;
-  display: none;
-}
+.vc-loading { font-size: 12px; padding: 10px 14px 0 14px; font-style: italic; display: none; }
 
-.vc-body {
-  padding: 14px;
-  overflow-y: auto;
-  flex-grow: 1;
-}
+.vc-body { padding: 14px; overflow-y: auto; flex-grow: 1; }
 
 /* Custom Webkit Scrollbar */
-.vc-body::-webkit-scrollbar {
-  width: 8px;
+.vc-body::-webkit-scrollbar { width: 8px; }
+.vc-body::-webkit-scrollbar-track { background: transparent; }
+.vc-body::-webkit-scrollbar-thumb { background-color: #555; border-radius: 4px; border: 2px solid rgba(20, 20, 20, 0.95); }
+.vc-body::-webkit-scrollbar-thumb:hover { background-color: #888; }
+
+.vc-source-group-title {
+  font-size: 14px;
+  color: #ffcc00;
+  margin-top: 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 4px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.vc-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.vc-body::-webkit-scrollbar-thumb {
-  background-color: #555;
-  border-radius: 4px;
-  border: 2px solid rgba(20, 20, 20, 0.95);
-}
-
-.vc-body::-webkit-scrollbar-thumb:hover {
-  background-color: #888;
+#vc-preview-panel {
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 0;
+  width: 360px;
+  background: rgba(20, 20, 20, 0.98);
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 16px;
+  color: #fff;
+  display: none;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+  overflow: hidden;
+  box-sizing: border-box;
 }
