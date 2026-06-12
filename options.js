@@ -1,5 +1,6 @@
 const saveOptions = () => {
   const apiKey = document.getElementById('apiKey').value;
+  const ytApiKey = document.getElementById('ytApiKey').value;
   const sources = {
     wiki: document.getElementById('src-wiki').checked,
     reddit: document.getElementById('src-reddit').checked,
@@ -8,10 +9,10 @@ const saveOptions = () => {
   };
 
   chrome.storage.local.set(
-    { geminiApiKey: apiKey, searchSources: sources },
+    { geminiApiKey: apiKey, ytApiKey: ytApiKey, searchSources: sources },
     () => {
       const status = document.getElementById('status');
-      status.textContent = 'Preferences saved successfully.';
+      status.textContent = 'Preferences saved successfully!';
       setTimeout(() => {
         status.textContent = '';
       }, 2000);
@@ -23,10 +24,12 @@ const restoreOptions = () => {
   chrome.storage.local.get(
     { 
       geminiApiKey: '', 
+      ytApiKey: '',
       searchSources: { wiki: true, reddit: true, scholar: false, youtube: false } 
     },
     (items) => {
       document.getElementById('apiKey').value = items.geminiApiKey;
+      document.getElementById('ytApiKey').value = items.ytApiKey;
       document.getElementById('src-wiki').checked = items.searchSources.wiki;
       document.getElementById('src-reddit').checked = items.searchSources.reddit;
       document.getElementById('src-scholar').checked = items.searchSources.scholar;
