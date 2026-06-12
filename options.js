@@ -1,11 +1,17 @@
 const saveOptions = () => {
   const apiKey = document.getElementById('apiKey').value;
+  const sources = {
+    wiki: document.getElementById('src-wiki').checked,
+    reddit: document.getElementById('src-reddit').checked,
+    scholar: document.getElementById('src-scholar').checked,
+    youtube: document.getElementById('src-youtube').checked
+  };
 
   chrome.storage.local.set(
-    { geminiApiKey: apiKey },
+    { geminiApiKey: apiKey, searchSources: sources },
     () => {
       const status = document.getElementById('status');
-      status.textContent = 'API Key saved successfully.';
+      status.textContent = 'Preferences saved successfully.';
       setTimeout(() => {
         status.textContent = '';
       }, 2000);
@@ -15,11 +21,16 @@ const saveOptions = () => {
 
 const restoreOptions = () => {
   chrome.storage.local.get(
-    ['geminiApiKey'],
+    { 
+      geminiApiKey: '', 
+      searchSources: { wiki: true, reddit: true, scholar: false, youtube: false } 
+    },
     (items) => {
-      if (items.geminiApiKey) {
-        document.getElementById('apiKey').value = items.geminiApiKey;
-      }
+      document.getElementById('apiKey').value = items.geminiApiKey;
+      document.getElementById('src-wiki').checked = items.searchSources.wiki;
+      document.getElementById('src-reddit').checked = items.searchSources.reddit;
+      document.getElementById('src-scholar').checked = items.searchSources.scholar;
+      document.getElementById('src-youtube').checked = items.searchSources.youtube;
     }
   );
 };

@@ -3,7 +3,6 @@ let linkBuffer = [];
 let currentVideoUrl = "";
 let isMinimized = false;
 
-// Remove timestamp parameter to identify unique videos
 const getBaseUrl = (url) => url.split('&t=')[0];
 
 function renderOverlay(currentSentence = null) {
@@ -19,7 +18,6 @@ function renderOverlay(currentSentence = null) {
   if (linkBuffer.length > 0) {
     html += '<ul style="margin: 0; padding-left: 20px;">';
     linkBuffer.forEach(link => {
-      // Increased font size of title to 32px (twice the previous default of 16px/14px logic)
       html += `<li style="margin-bottom: 16px;">
         <a href="${link.url}" target="_blank" style="color: #3ea6ff; text-decoration: none; font-weight: bold; font-size: 28px;">${link.title}</a>
         <span style="display: block; font-size: 14px; color: #aaa; margin-top: 4px;">${link.reason}</span>
@@ -34,13 +32,15 @@ function renderOverlay(currentSentence = null) {
 }
 
 document.addEventListener('pause', (event) => {
+  // Ensure the pause event is firing strictly on the video watch page
+  if (window.location.pathname !== '/watch') return;
+
   if (event.target.tagName && event.target.tagName.toLowerCase() === 'video') {
     const videoElement = event.target;
     const timestamp = Math.round(videoElement.currentTime);
     const rawUrl = window.location.href; 
     const baseUrl = getBaseUrl(rawUrl);
     
-    // Clear buffer if the user navigates to a new video
     if (baseUrl !== currentVideoUrl) {
       currentVideoUrl = baseUrl;
       linkBuffer = [];
@@ -48,7 +48,6 @@ document.addEventListener('pause', (event) => {
 
     let overlay = document.getElementById('vibe-code-overlay');
     
-    // Scaffold UI on first run
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'vibe-code-overlay';
@@ -66,7 +65,6 @@ document.addEventListener('pause', (event) => {
       `;
       document.body.appendChild(overlay);
 
-      // Event listeners for UI controls
       document.getElementById('vc-min-btn').addEventListener('click', () => {
         isMinimized = !isMinimized;
         document.getElementById('vc-body').style.display = isMinimized ? 'none' : 'block';
@@ -81,11 +79,9 @@ document.addEventListener('pause', (event) => {
       });
     }
     
-    // Dynamically limit height to 1/2 of the actual video player height
     const videoHeight = videoElement.clientHeight || window.innerHeight;
     overlay.style.maxHeight = (videoHeight / 2) + 'px';
     
-    // Reset display states on pause
     overlay.style.display = 'flex';
     isMinimized = false;
     document.getElementById('vc-body').style.display = 'block';
@@ -95,14 +91,12 @@ document.addEventListener('pause', (event) => {
     loadingIndicator.style.color = '#ffcc00';
     loadingIndicator.innerText = "Awaiting playback halt...";
     
-    // Render existing buffer immediately while waiting for API
     renderOverlay();
 
     if (deepPauseTimeout) {
       clearTimeout(deepPauseTimeout);
     }
 
-    // 2-Second Debounce Throttle
     deepPauseTimeout = setTimeout(() => {
       loadingIndicator.innerText = "Extracting context via AI...";
       
@@ -123,7 +117,6 @@ document.addEventListener('pause', (event) => {
           
           if (links && links.length > 0) {
             links.reverse().forEach(newLink => {
-              // Aggressive deduplication: check for matching URL (ignoring trailing slash) OR identical title
               const normUrl = newLink.url.replace(/\/$/, '').toLowerCase();
               const normTitle = newLink.title.toLowerCase();
               
@@ -133,7 +126,7 @@ document.addEventListener('pause', (event) => {
               );
               
               if (!isDuplicate) {
-                linkBuffer.unshift(newLink); // Add to the top of the list
+                linkBuffer.unshift(newLink);
               }
             });
           }
@@ -146,6 +139,8 @@ document.addEventListener('pause', (event) => {
 }, true);
 
 document.addEventListener('play', (event) => {
+  if (window.location.pathname !== '/watch') return;
+
   if (event.target.tagName && event.target.tagName.toLowerCase() === 'video') {
     if (deepPauseTimeout) {
       clearTimeout(deepPauseTimeout);
