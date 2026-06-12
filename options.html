@@ -3,24 +3,38 @@
 <head>
   <title>YouTube Deep Pause Settings</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 400px; background: #0f0f0f; color: #e1e1e1; }
-    h2 { color: #fff; }
-    input[type="password"] { width: 100%; padding: 8px; margin: 10px 0; box-sizing: border-box; background: #222; border: 1px solid #444; color: #fff; }
-    button { padding: 8px 16px; background: #3ea6ff; color: #0f0f0f; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+    body { font-family: sans-serif; padding: 20px; max-width: 450px; background: #0f0f0f; color: #e1e1e1; }
+    h2 { color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; }
+    .input-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; color: #ccc; }
+    input[type="password"] { width: 100%; padding: 10px; box-sizing: border-box; background: #222; border: 1px solid #444; color: #fff; border-radius: 4px; }
+    button { padding: 10px 16px; background: #3ea6ff; color: #0f0f0f; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 100%; }
     button:hover { background: #65b8ff; }
-    #status { margin-top: 10px; color: #4caf50; font-size: 14px; }
-    .source-group { margin-top: 20px; background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333; }
-    .source-group label { display: block; margin-bottom: 8px; cursor: pointer; }
-    a { color: #3ea6ff; }
+    #status { margin-top: 15px; color: #4caf50; font-size: 14px; text-align: center; height: 20px; }
+    .source-group { margin-top: 25px; background: #1a1a1a; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+    .source-group label { display: block; margin-bottom: 10px; cursor: pointer; font-weight: normal; }
+    a { color: #3ea6ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .help-text { font-size: 12px; color: #888; margin-top: 4px; display: block; }
   </style>
 </head>
 <body>
-  <h2>Settings</h2>
-  <label for="apiKey">Gemini API Key:</label>
-  <input type="password" id="apiKey" placeholder="Enter your Gemini API Key">
+  <h2>Deep Pause Settings</h2>
+  
+  <div class="input-group">
+    <label for="apiKey">Gemini API Key</label>
+    <input type="password" id="apiKey" placeholder="Enter your Gemini API Key">
+    <span class="help-text">Get your key from <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a>.</span>
+  </div>
+
+  <div class="input-group">
+    <label for="ytApiKey">YouTube Data API (v3) Key</label>
+    <input type="password" id="ytApiKey" placeholder="Enter your YouTube Data API Key">
+    <span class="help-text">Get your key from the <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank">Google Cloud Console</a>.</span>
+  </div>
   
   <div class="source-group">
-    <h3 style="margin-top: 0; font-size: 14px; color: #aaa;">Preferred Search Sources</h3>
+    <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 15px; color: #eee;">Preferred Search Sources</h3>
     <label><input type="checkbox" id="src-wiki"> Wikipedia</label>
     <label><input type="checkbox" id="src-reddit"> Reddit</label>
     <label><input type="checkbox" id="src-scholar"> Google Scholar</label>
@@ -29,10 +43,6 @@
 
   <button id="save">Save Preferences</button>
   <div id="status"></div>
-  
-  <p style="font-size: 12px; color: #666; margin-top: 20px;">
-    Get your key from <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a>.
-  </p>
 
   <script src="options.js"></script>
 </body>

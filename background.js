@@ -1,6 +1,7 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openOptions") {
-    chrome.runtime.openOptionsPage();
+    // Explicitly create a tab to bypass unpacked extension manifest limitations
+    chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
     sendResponse({ status: "ok" });
     return true;
   }
@@ -10,14 +11,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     (async () => {
       try {
-        const items = await chrome.storage.local.get(['geminiApiKey', 'searchSources']);
+        const items = await chrome.storage.local.get(['geminiApiKey', 'ytApiKey', 'searchSources']);
         const apiKey = items.geminiApiKey;
-        if (!apiKey) throw new Error("API Key missing. Click extension options to set it.");
+        if (!apiKey) throw new Error("API Key missing. Click the settings icon (⚙) to set it.");
 
         const sources = items.searchSources || { wiki: true, reddit: true, scholar: false, youtube: false };
         let activeSources = [];
         if (sources.wiki) activeSources.push("Wikipedia");
-        if (sources.reddit) activeSources.push("Reddit (CRITICAL: Link ONLY to root subreddits e.g., https://www.reddit.com/r/technology, NEVER individual posts to avoid deleted content)");
+        
+        // Strict prompt engineering to fetch exact Reddit posts instead of subreddits, while mitigating dead links
+        if (sources.reddit) activeSources.push("Reddit (CRITICAL: Link to specific, highly relevant Reddit posts. Double-check internally that the post is a persistent, well-known discussion that fits the description perfectly and is not deleted. Avoid generic subreddits.)");
+        
         if (sources.scholar) activeSources.push("Google Scholar");
         if (sources.youtube) activeSources.push("YouTube");
         
@@ -74,7 +78,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           promptText += `Spoken dialogue: <dialogue> ${fullTranscript} </dialogue> `;
         }
         
-        // Increased summary length to 80 words for a much richer preview
         promptText += `Task: 1. Identify the concept discussed at exactly ${request.timestamp}s. 2. Output 5-10 direct educational links. ${sourceInstruction} 3. For each link, provide a 'preview' field containing a comprehensive, 80-word factual summary of what the user will read when they click the link. 4. Provide a short reason for relevance. 5. DO NOT generate a general summary.`;
         promptText = promptText.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
