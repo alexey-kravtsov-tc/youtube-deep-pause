@@ -17,10 +17,12 @@ function renderOverlay(currentSentence = null) {
   }
   
   if (linkBuffer.length > 0) {
-    const groups = { Wikipedia: [], Reddit: [], "Google Scholar": [], YouTube: [], Other: [] };
+    const groups = { Community: [], Wikipedia: [], Reddit: [], "Google Scholar": [], YouTube: [], Other: [] };
     
+    // Categorize into groups
     linkBuffer.forEach(link => {
-      if (link.url.includes('wikipedia.org')) groups.Wikipedia.push(link);
+      if (link.url === '#comments') groups.Community.push(link);
+      else if (link.url.includes('wikipedia.org')) groups.Wikipedia.push(link);
       else if (link.url.includes('reddit.com')) groups.Reddit.push(link);
       else if (link.url.includes('scholar.google')) groups["Google Scholar"].push(link);
       else if (link.url.includes('youtube.com') || link.url.includes('youtu.be')) groups.YouTube.push(link);
@@ -30,26 +32,31 @@ function renderOverlay(currentSentence = null) {
     for (const [sourceName, links] of Object.entries(groups)) {
       if (links.length === 0) continue;
       
-      // Wrap each group in a visual card with a distinct background
-      html += `<div class="vc-source-card">`;
-      html += `<div class="vc-source-group-title">${sourceName}</div>`;
-      html += '<ul style="margin: 0; padding-left: 20px; list-style-type: none; padding-left: 0;">';
+      const isCommunity = sourceName === 'Community';
+      const borderColor = isCommunity ? '#6a1b9a' : '#444';
+      const titleColor = isCommunity ? '#ce93d8' : '#ffcc00';
+
+      html += `<div class="vc-source-card" style="border-color: ${borderColor};">`;
+      html += `<div class="vc-source-group-title" style="color: ${titleColor};">${sourceName}</div>`;
+      html += '<ul style="margin: 0; list-style-type: none; padding-left: 0;">';
       
       links.forEach((link, idx) => {
         const linkId = `vc-link-${sourceName.replace(/\s+/g, '')}-${idx}-${Date.now()}`;
         
-        // Double character limit: ~800 chars
         let previewText = link.preview || "No preview information generated for this link.";
         if (previewText.length > 800) previewText = previewText.substring(0, 797) + "...";
         window.vcPreviews[linkId] = previewText;
 
-        html += `<li style="margin-bottom: 12px; padding-left: 10px; border-left: 2px solid #444;">
-          <a href="${link.url}" target="_blank" class="vc-link-item" data-id="${linkId}" style="color: #3ea6ff; text-decoration: none; font-weight: bold; font-size: 24px;">${link.title}</a>
+        const liBorderColor = isCommunity ? '#ab47bc' : '#444';
+        const linkColor = isCommunity ? '#e1bee7' : '#3ea6ff';
+        const targetAttr = isCommunity ? '' : 'target="_blank"';
+
+        html += `<li style="margin-bottom: 12px; padding-left: 10px; border-left: 2px solid ${liBorderColor};">
+          <a href="${link.url}" ${targetAttr} class="vc-link-item" data-id="${linkId}" style="color: ${linkColor}; text-decoration: none; font-weight: bold; font-size: 24px;">${link.title}</a>
           <span style="display: block; font-size: 14px; color: #aaa; margin-top: 4px;">${link.reason}</span>
         </li>`;
       });
-      html += '</ul>';
-      html += `</div>`;
+      html += '</ul></div>';
     }
   } else {
     html += '<div style="font-size: 14px; color: #aaa;">No context links buffered yet.</div>';
@@ -57,6 +64,19 @@ function renderOverlay(currentSentence = null) {
   
   body.innerHTML = html;
 }
+
+// Global click listener to catch our #comments deep link without reloading
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('vc-link-item') && e.target.getAttribute('href') === '#comments') {
+    e.preventDefault();
+    const commentSection = document.querySelector('ytd-comments');
+    if (commentSection) {
+      commentSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      alert("Please scroll down manually to load the comments section first.");
+    }
+  }
+});
 
 document.addEventListener('mouseover', (e) => {
   if (e.target.classList.contains('vc-link-item')) {

@@ -1,6 +1,8 @@
+// Global cache to ensure we only fetch comments once per video per worker session
+let videoCommentCache = { videoId: null, comments: [] };
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "openOptions") {
-    // Explicitly create a tab to bypass unpacked extension manifest limitations
     chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
     sendResponse({ status: "ok" });
     return true;
@@ -11,16 +13,44 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     (async () => {
       try {
-        const items = await chrome.storage.local.get(['geminiApiKey', 'ytApiKey', 'searchSources']);
+        const items = await chrome.storage.local.get(['geminiApiKey', 'ytApiKey', 'maxComments', 'searchSources']);
         const apiKey = items.geminiApiKey;
         if (!apiKey) throw new Error("API Key missing. Click the settings icon (⚙) to set it.");
+
+        const ytApiKey = items.ytApiKey;
+        const maxComments = items.maxComments || 100;
+        const videoIdMatch = request.videoUrl.match(/[?&]v=([^&]+)/);
+        const videoId = videoIdMatch ? videoIdMatch[1] : null;
+
+        // Fetch YouTube Comments if API Key is present
+        let fetchedComments = [];
+        if (ytApiKey && videoId && maxComments > 0) {
+          if (videoCommentCache.videoId === videoId) {
+            fetchedComments = videoCommentCache.comments;
+          } else {
+            try {
+              const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&maxResults=${maxComments}&order=relevance&key=${ytApiKey}`);
+              const ytData = await ytRes.json();
+              
+              if (ytData.items) {
+                fetchedComments = ytData.items.map(item => ({
+                  author: item.snippet.topLevelComment.snippet.authorDisplayName,
+                  text: item.snippet.topLevelComment.snippet.textOriginal
+                }));
+                videoCommentCache = { videoId, comments: fetchedComments };
+              }
+            } catch (err) {
+              console.warn("[Deep Pause Background] Failed to fetch comments:", err);
+            }
+          }
+        }
 
         const sources = items.searchSources || { wiki: true, reddit: true, scholar: false, youtube: false };
         let activeSources = [];
         if (sources.wiki) activeSources.push("Wikipedia");
         
-        // Strict prompt engineering to fetch exact Reddit posts instead of subreddits, while mitigating dead links
-        if (sources.reddit) activeSources.push("Reddit (CRITICAL: Link to specific, highly relevant Reddit posts. Double-check internally that the post is a persistent, well-known discussion that fits the description perfectly and is not deleted. Avoid generic subreddits.)");
+        // Critical fix for Reddit: LLMs hallucinate specific post URL IDs, so we force them to use search URLs
+        if (sources.reddit) activeSources.push("Reddit (CRITICAL: DO NOT guess specific post URLs as they will 404. ALWAYS use the search format instead: https://www.reddit.com/search/?q=search+terms)");
         
         if (sources.scholar) activeSources.push("Google Scholar");
         if (sources.youtube) activeSources.push("YouTube");
@@ -77,8 +107,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (fullTranscript.trim() !== "") {
           promptText += `Spoken dialogue: <dialogue> ${fullTranscript} </dialogue> `;
         }
+
+        if (fetchedComments.length > 0) {
+          const commentString = fetchedComments.map(c => `[Author: ${c.author}] ${c.text.substring(0, 400)}`).join('\n');
+          promptText += `Top comments on this video: <comments> ${commentString} </comments>. `;
+        }
         
-        promptText += `Task: 1. Identify the concept discussed at exactly ${request.timestamp}s. 2. Output 5-10 direct educational links. ${sourceInstruction} 3. For each link, provide a 'preview' field containing a comprehensive, 80-word factual summary of what the user will read when they click the link. 4. Provide a short reason for relevance. 5. DO NOT generate a general summary.`;
+        promptText += `Task: 1. Identify the concept discussed at exactly ${request.timestamp}s. 2. Output 5-10 direct educational links. ${sourceInstruction} 3. For each link, provide an 80-word factual preview. 4. If any <comments> relate to this timestamp, include exactly ONE extra link in the array with Title "Community Insights", URL "#comments", a brief reason, and a detailed synthesis of the relevant comments in the 'preview' field. 5. DO NOT generate a general summary.`;
         promptText = promptText.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
