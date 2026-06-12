@@ -1,14 +1,16 @@
 {
   "manifest_version": 3,
   "name": "YouTube Deep Pause",
-  "version": "1.0",
-  "description": "Contextual search and fact-checking on video pause.",
-  "permissions": ["scripting", "storage"],
-  "host_permissions": ["*://*.youtube.com/*", "https://generativelanguage.googleapis.com/*"],
-  "options_ui": {
-    "page": "options.html",
-    "open_in_tab": false
-  },
+  "version": "1.0.0",
+  "description": "Contextual AI analysis, fact-checking, and community insight extraction on YouTube pause.",
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://*.googleapis.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
@@ -18,5 +20,9 @@
       "js": ["content.js"],
       "css": ["style.css"]
     }
-  ]
+  ],
+  "options_page": "options.html",
+  "action": {
+    "default_title": "Deep Pause Settings"
+  }
 }
