@@ -1,0 +1,27 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on tags like v1.0.0
+  workflow_dispatch: # Allows manual trigger from GH UI
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package Extension (ZIP)
+        run: |
+          zip -r youtube-deep-pause.zip . -x "*.git*" "*node_modules*" "tests/*" "playwright.config.js" "package*.json" ".github*"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: youtube-deep-pause.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
