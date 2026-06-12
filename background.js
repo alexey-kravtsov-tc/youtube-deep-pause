@@ -1,4 +1,3 @@
-// Global cache to ensure we only fetch comments once per video per worker session
 let videoCommentCache = { videoId: null, comments: [] };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -13,16 +12,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     (async () => {
       try {
-        const items = await chrome.storage.local.get(['geminiApiKey', 'ytApiKey', 'maxComments', 'searchSources']);
+        const items = await chrome.storage.local.get(['geminiApiKey', 'ytApiKey', 'maxComments', 'previewLength', 'continuousContext', 'searchSources']);
         const apiKey = items.geminiApiKey;
         if (!apiKey) throw new Error("API Key missing. Click the settings icon (⚙) to set it.");
 
         const ytApiKey = items.ytApiKey;
-        const maxComments = items.maxComments || 100;
+        const maxComments = items.maxComments !== undefined ? items.maxComments : 100;
+        const previewLength = items.previewLength || 80;
+        const continuousContext = items.continuousContext !== false; // defaults to true
+        
         const videoIdMatch = request.videoUrl.match(/[?&]v=([^&]+)/);
         const videoId = videoIdMatch ? videoIdMatch[1] : null;
 
-        // Fetch YouTube Comments if API Key is present
         let fetchedComments = [];
         if (ytApiKey && videoId && maxComments > 0) {
           if (videoCommentCache.videoId === videoId) {
@@ -48,10 +49,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const sources = items.searchSources || { wiki: true, reddit: true, scholar: false, youtube: false };
         let activeSources = [];
         if (sources.wiki) activeSources.push("Wikipedia");
-        
-        // Critical fix for Reddit: LLMs hallucinate specific post URL IDs, so we force them to use search URLs
         if (sources.reddit) activeSources.push("Reddit (CRITICAL: DO NOT guess specific post URLs as they will 404. ALWAYS use the search format instead: https://www.reddit.com/search/?q=search+terms)");
-        
         if (sources.scholar) activeSources.push("Google Scholar");
         if (sources.youtube) activeSources.push("YouTube");
         
@@ -113,7 +111,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           promptText += `Top comments on this video: <comments> ${commentString} </comments>. `;
         }
         
-        promptText += `Task: 1. Identify the concept discussed at exactly ${request.timestamp}s. 2. Output 5-10 direct educational links. ${sourceInstruction} 3. For each link, provide an 80-word factual preview. 4. If any <comments> relate to this timestamp, include exactly ONE extra link in the array with Title "Community Insights", URL "#comments", a brief reason, and a detailed synthesis of the relevant comments in the 'preview' field. 5. DO NOT generate a general summary.`;
+        if (continuousContext && request.previousLinks && request.previousLinks.length > 0) {
+          const prevStr = request.previousLinks.join(', ');
+          promptText += `CRITICAL PROGRESSIVE CONTEXT: You have already suggested these URLs in this session: [${prevStr}]. DO NOT duplicate them. Build upon them with new, complementary insights based on the new timestamp. `;
+        }
+
+        promptText += `Task: 1. Identify the concept discussed at exactly ${request.timestamp}s. 2. Output 5-10 direct educational links. ${sourceInstruction} 3. For each link, provide a ${previewLength}-word factual preview. 4. If any <comments> relate to this timestamp, include exactly ONE extra link in the array with Title "View Relevant Discussions", URL "#comments", a brief reason, and a detailed synthesis of the relevant comments in the 'preview' field. 5. DO NOT generate a general summary. 6. DO NOT explicitly mention the current timecode or timestamp in your response; use it implicitly to guide your context search.`;
         promptText = promptText.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
